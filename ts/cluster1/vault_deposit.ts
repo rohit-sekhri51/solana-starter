@@ -30,28 +30,41 @@ const provider = new AnchorProvider(connection, new Wallet(keypair), {
 });
 
 // Create our program
-const program = new Program<WbaVault>(IDL, "<address>" as Address, provider);
+const program = new Program<WbaVault>(IDL, "D51uEDHLbWAxNfodfQDv7qkp8WZtxrhi3uganGbNos7o" as Address, provider);
 
 // Create a random keypair
-const vaultState = new PublicKey("<address>");
+const vaultState = new PublicKey("DnDm1Aii8TAacpraLuv2HYqJHxGSCN4RdcRTe5Q1KjF7");
+// Wont it create problem. Init random keypair. deposit unique publickey
+
 // Create the PDA for our enrollment account
-// const vaultAuth = ???
+const [vaultAuth] =  PublicKey.findProgramAddressSync(
+    [Buffer.from("auth"),vaultState.toBuffer()],
+    SystemProgram.programId
+  );
 
 // Create the vault key
-// const vault = ???
+const [vault] = PublicKey.findProgramAddressSync(
+  [Buffer.from("vault"),vaultAuth.toBuffer()],
+  SystemProgram.programId
+);
 
 // Execute our enrollment transaction
 (async () => {
   try {
-    // const signature = await program.methods
-    // .deposit(new BN(<number>)    )
-    // .accounts({
-    //    ???
-    // })
-    // .signers([
-    //     keypair
-    // ]).rpc();
-    // console.log(`Deposit success! Check out your TX here:\n\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
+    const signature = await program.methods
+    .deposit(new BN(1_00_00))
+    .accounts({
+      owner: keypair.publicKey,
+      vaultState: vaultState,
+      vaultAuth: vaultAuth,
+      vault: vault,
+      systemProgram: SystemProgram.programId
+    })
+    .signers([
+        keypair
+    ]).rpc();
+
+    console.log(`Deposit success! Check out your TX here:\n\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
   } catch (e) {
     console.error(`Oops, something went wrong: ${e}`);
   }

@@ -37,20 +37,32 @@ console.log(`Vault public key: ${vaultState.publicKey.toBase58()}`);
 
 // Create the PDA for our enrollment account
 // Seeds are "auth", vaultState
-// const vaultAuth = ???
+  const [vaultAuth] =  PublicKey.findProgramAddressSync(
+    [Buffer.from("auth"),vaultState.publicKey.toBuffer()],
+    SystemProgram.programId
+  );
 
 // Create the vault key
 // Seeds are "vault", vaultAuth
-// const vault = ???
+const [vault] = PublicKey.findProgramAddressSync(
+  [Buffer.from("vault"),vaultAuth.toBuffer()],
+  SystemProgram.programId
+);
 
 // Execute our enrollment transaction
 (async () => {
   try {
-    // const signature = await program.methods.initialize()
-    // .accounts({
-    //     ???
-    // }).signers([keypair, vaultState]).rpc();
-    // console.log(`Init success! Check out your TX here:\n\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
+    const signature = await program.methods.initialize()
+    .accounts({
+      owner: keypair.publicKey,
+      vaultState: vaultState.publicKey,
+      vaultAuth: vaultAuth,
+      vault: vault,
+      systemProgram: SystemProgram.programId
+    }).signers([keypair, vaultState]).rpc();
+
+    console.log(`Init success! Check out your TX here:\n\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`);
+    
   } catch (e) {
     console.error(`Oops, something went wrong: ${e}`);
   }
